@@ -8,16 +8,16 @@ import (
 
 func main() {
 	filters := make([]gift.Filter, 2)
-	filters[0] = gift.Invert()
+	filters[0] = gift.Rotate180()
 	filters[1] = gift.Grayscale()
 
-	leao := picture.NewPicture("testdata/car.png", filters...)
-	dinheiro := picture.NewPicture("testdata/fish.png", filters...)
-	dinossauro := picture.NewPicture("testdata/sunflower.png", filters...)
+	car := picture.NewPicture("testdata/car.png", filters...)
+	fish := picture.NewPicture("testdata/fish.png", gift.Sepia(85))
+	sunflower := picture.NewPicture("testdata/sunflower.png", gift.GaussianBlur(1.5))
 
-	pics := []picture.Picture{leao, dinheiro, dinossauro}
+	pics := []picture.Picture{car, fish, sunflower}
 
-	paths := []string{"testdata/teste1.png", "testdata/teste2.png", "testdata/teste3.png"}
+	paths := []string{"testdata/results/teste1.png", "testdata/results/teste2.png", "testdata/results/teste3.png"}
 
 	for idx, pic := range pics {
 		pic.Apply()

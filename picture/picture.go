@@ -3,8 +3,9 @@ package picture
 import (
 	"fmt"
 	"image"
+	"image/draw"
 	"image/png"
-	_ "image/png"
+
 	"os"
 
 	"github.com/disintegration/gift"
@@ -13,7 +14,7 @@ import (
 type Picture struct {
 	filtersList *gift.GIFT
 	original    image.Image
-	filtered    *image.NRGBA
+	filtered    draw.Image
 	format      string
 }
 
@@ -48,6 +49,11 @@ func loadImage(path string) (image.Image, string, error) {
 func (p *Picture) Apply() {
 
 	p.filtersList.Draw(p.filtered, p.original)
+
+}
+
+func (p Picture) Reset() {
+	p.filtersList.Empty()
 
 }
 

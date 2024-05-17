@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/draw"
 	"image/png"
+	"slices"
 
 	"os"
 
@@ -20,6 +21,7 @@ type Picture struct {
 
 func NewPicture(source string, filters ...gift.Filter) *Picture {
 	p := new(Picture)
+	filters = p.checkNil(filters...)
 	p.filtersList = gift.New(filters...)
 	img, format, err := loadImage(source)
 	if err != nil {
@@ -31,6 +33,16 @@ func NewPicture(source string, filters ...gift.Filter) *Picture {
 	bounds := p.original.Bounds()
 	p.filtered = image.NewNRGBA(bounds)
 	return p
+
+}
+
+func (p *Picture) checkNil(filters ...gift.Filter) []gift.Filter {
+	validator := func(f gift.Filter) bool {
+		return f == nil
+
+	}
+	f := slices.DeleteFunc(filters, validator)
+	return f
 
 }
 

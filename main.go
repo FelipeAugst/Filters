@@ -12,12 +12,12 @@ import (
 func main() {
 	var generators = []filter.Filter{
 
-		{Name: "gaussian", Params: []any{80.0}},
+		{Name: "gaussian", Params: []any{3.0}},
 		{Name: "color-balance", Params: []any{50.0, 20.5, 30.4}},
-		{Name: "sobel"},
+		{Name: "transpose"},
 	}
 
-	var filters = make([]gift.Filter, 10)
+	var filters []gift.Filter
 	for _, filter := range generators {
 		f, err := filter.Generate()
 		if err != nil {

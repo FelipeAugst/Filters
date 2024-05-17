@@ -32,6 +32,11 @@ func (f Filter) Generate() (gift.Filter, error) {
 
 func (f *Filter) ConvertFloat() {
 	for idx, val := range f.Params {
+		s, ok := val.([]float64)
+		if ok {
+			f.Params[idx] = sliceConvert(s)
+			continue
+		}
 		v, ok := val.(float64)
 		if ok {
 			f.Params[idx] = float32(v)
@@ -39,6 +44,14 @@ func (f *Filter) ConvertFloat() {
 
 	}
 
+}
+
+func sliceConvert(s []float64) []float32 {
+	var converted []float32
+	for _, v := range s {
+		converted = append(converted, float32(v))
+	}
+	return converted
 }
 
 type effect interface {
@@ -132,6 +145,50 @@ func (r rgbOp) setParams(params ...any) error {
 
 }
 
+type convolution struct {
+	kernel    []float32
+	normalize bool
+	alpha     bool
+	abs       bool
+	delta     float32
+	generator func([]float32, bool, bool, bool, float32) gift.Filter
+}
+
+func (c convolution) generateFilter() gift.Filter {
+	return c.generator(c.kernel, c.normalize, c.alpha, c.abs, c.delta)
+}
+
+func (c convolution) getName() string {
+	return "convolution"
+}
+
+func (c convolution) setParams(params ...any) error {
+	if len(params) != 5 {
+		return fmt.Errorf("%s require 5 arguments", c.getName())
+	}
+	s, ok := params[0].([]float32)
+	if !ok {
+		return fmt.Errorf("%s require a float 32 slice for kernel", c.getName())
+	}
+	c.kernel = s
+	var args []bool
+	for idx, arg := range params[1:3] {
+		v, ok := arg.(bool)
+		if !ok {
+			return fmt.Errorf("%s require a bool for argument %d", c.getName(), idx+1)
+		}
+		args = append(args, v)
+	}
+	c.normalize, c.alpha, c.abs = args[0], args[1], args[2]
+
+	v, ok := params[4].(float32)
+	if !ok {
+		return fmt.Errorf("%s require float 32 for argument 4", c.getName())
+	}
+	c.delta = v
+	return nil
+}
+
 func setMaps() {
 
 	effects = map[string]effect{"sobel": noParams{name: "sobel", generator: gift.Sobel},
@@ -149,6 +206,7 @@ func setMaps() {
 		"gaussian":        oneFloat{name: "gaussian-blur", generator: gift.GaussianBlur},
 		"gaussian-blur":   oneFloat{name: "gaussian-blur", generator: gift.GaussianBlur},
 		"color-balance":   rgbOp{name: "color-balance", generator: gift.ColorBalance},
+		"convolution":     convolution{generator: gift.Convolution},
 	}
 
 }

@@ -28,7 +28,6 @@ func main() {
 		filters = append(filters, f)
 
 	}
-	fmt.Println(len(filters))
 
 	car := picture.NewPicture("testdata/car.png", filters[0])
 	fish := picture.NewPicture("testdata/fish.png", filters[1])

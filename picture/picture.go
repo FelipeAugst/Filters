@@ -18,13 +18,13 @@ type Picture struct {
 	format      string
 }
 
-func NewPicture(source string, filters ...gift.Filter) Picture {
-	var p Picture
+func NewPicture(source string, filters ...gift.Filter) *Picture {
+	p := new(Picture)
 	p.filtersList = gift.New(filters...)
 	img, format, err := loadImage(source)
 	if err != nil {
 		fmt.Println("Failed to load source image \n ", err)
-		return Picture{}
+		return nil
 	}
 	p.original = img
 	p.format = format
@@ -52,12 +52,12 @@ func (p *Picture) Apply() {
 
 }
 
-func (p Picture) Reset() {
+func (p *Picture) Reset() {
 	p.filtersList.Empty()
 
 }
 
-func (p Picture) Save(path string) error {
+func (p *Picture) Save(path string) error {
 	file, err := os.Create(path)
 	if err != nil {
 		return err

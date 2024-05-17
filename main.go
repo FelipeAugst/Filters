@@ -2,20 +2,38 @@ package main
 
 import (
 	"filters/picture"
+	"filters/picture/filter"
+	"fmt"
+	"log"
 
 	"github.com/disintegration/gift"
 )
 
 func main() {
-	filters := make([]gift.Filter, 2)
-	filters[0] = gift.Rotate180()
-	filters[1] = gift.Grayscale()
+	var generators = []filter.Filter{
 
-	car := picture.NewPicture("testdata/car.png", filters...)
-	fish := picture.NewPicture("testdata/fish.png", gift.Sepia(85))
-	sunflower := picture.NewPicture("testdata/sunflower.png", gift.GaussianBlur(1.5))
+		{Name: "sepia", Params: []any{80.0}},
+		{Name: "color-balance", Params: []any{50.0, 20.5, 30.4}},
+		{Name: "sobel"},
+	}
 
-	pics := []picture.Picture{car, fish, sunflower}
+	var filters = make([]gift.Filter, 1)
+	for _, filter := range generators {
+		f, err := filter.Generate()
+		if err != nil {
+			log.Fatalf("error generating filter %s: %s", filter.Name, err.Error())
+
+		}
+		filters = append(filters, f)
+
+	}
+	fmt.Println(len(filters))
+
+	car := picture.NewPicture("testdata/car.png", filters[0])
+	fish := picture.NewPicture("testdata/fish.png", filters[1])
+	sunflower := picture.NewPicture("testdata/sunflower.png", filters[2])
+
+	pics := []*picture.Picture{car, fish, sunflower}
 
 	paths := []string{"testdata/results/teste1.png", "testdata/results/teste2.png", "testdata/results/teste3.png"}
 

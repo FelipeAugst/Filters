@@ -10,6 +10,37 @@ var (
 	effects map[string]effect
 )
 
+type Filter struct {
+	Name   string `json:"name"`
+	Params []any  `json:"params"`
+}
+
+func (f Filter) Generate() (gift.Filter, error) {
+	f.ConvertFloat()
+	e, ok := effects[f.Name]
+	if !ok {
+		return nil, fmt.Errorf("invalid filter name %s", f.Name)
+	}
+
+	if err := e.setParams(f.Params...); err != nil {
+		return nil, err
+	}
+
+	return e.generateFilter(), nil
+
+}
+
+func (f *Filter) ConvertFloat() {
+	for idx, val := range f.Params {
+		v, ok := val.(float64)
+		if ok {
+			f.Params[idx] = float32(v)
+		}
+
+	}
+
+}
+
 type effect interface {
 	generateFilter() gift.Filter
 	getName() string
@@ -119,20 +150,6 @@ func setMaps() {
 		"gaussian-blur":   oneFloat{name: "gaussian-blur", generator: gift.GaussianBlur},
 		"color-balance":   rgbOp{name: "color-balance", generator: gift.ColorBalance},
 	}
-
-}
-
-func NewFilter(name string, params ...float32) (gift.Filter, error) {
-	e, ok := effects[name]
-	if !ok {
-		return nil, fmt.Errorf("invalid filter name %s", name)
-	}
-
-	if err := e.setParams(); err != nil {
-		return nil, err
-	}
-
-	return e.generateFilter(), nil
 
 }
 

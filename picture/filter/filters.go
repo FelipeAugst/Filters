@@ -15,7 +15,7 @@ type Filter struct {
 	Params []any  `json:"params"`
 }
 
-func (f Filter) Generate() (gift.Filter, error) {
+func (f *Filter) Generate() (gift.Filter, error) {
 	f.ConvertFloat()
 	e, ok := effects[f.Name]
 	if !ok {
@@ -35,7 +35,7 @@ func (f *Filter) ConvertFloat() {
 		s, ok := val.([]float64)
 		if ok {
 			f.Params[idx] = sliceConvert(s)
-			continue
+
 		}
 		v, ok := val.(float64)
 		if ok {
@@ -65,15 +65,15 @@ type noParams struct {
 	generator func() gift.Filter
 }
 
-func (n noParams) generateFilter() gift.Filter {
+func (n *noParams) generateFilter() gift.Filter {
 	return n.generator()
 }
 
-func (n noParams) getName() string {
+func (n *noParams) getName() string {
 	return n.name
 }
 
-func (n noParams) setParams(params ...any) error {
+func (n *noParams) setParams(params ...any) error {
 	if len(params) > 0 {
 		return fmt.Errorf("%s take no arguments", n.getName())
 
@@ -88,15 +88,15 @@ type oneFloat struct {
 	generator func(float32) gift.Filter
 }
 
-func (o oneFloat) generateFilter() gift.Filter {
+func (o *oneFloat) generateFilter() gift.Filter {
 	return o.generator(o.param)
 }
 
-func (o oneFloat) getName() string {
+func (o *oneFloat) getName() string {
 	return o.name
 }
 
-func (o oneFloat) setParams(params ...any) error {
+func (o *oneFloat) setParams(params ...any) error {
 	if len(params) != 1 {
 		return fmt.Errorf("%s require one argument", o.getName())
 
@@ -117,15 +117,15 @@ type rgbOp struct {
 	generator func(float32, float32, float32) gift.Filter
 }
 
-func (rgb rgbOp) generateFilter() gift.Filter {
+func (rgb *rgbOp) generateFilter() gift.Filter {
 	return rgb.generator(rgb.r, rgb.g, rgb.b)
 }
 
-func (r rgbOp) getName() string {
+func (r *rgbOp) getName() string {
 	return r.name
 }
 
-func (r rgbOp) setParams(params ...any) error {
+func (r *rgbOp) setParams(params ...any) error {
 	if len(params) != 3 {
 		return fmt.Errorf("%s require three arguments", r.getName())
 
@@ -154,15 +154,15 @@ type convolution struct {
 	generator func([]float32, bool, bool, bool, float32) gift.Filter
 }
 
-func (c convolution) generateFilter() gift.Filter {
+func (c *convolution) generateFilter() gift.Filter {
 	return c.generator(c.kernel, c.normalize, c.alpha, c.abs, c.delta)
 }
 
-func (c convolution) getName() string {
+func (c *convolution) getName() string {
 	return "convolution"
 }
 
-func (c convolution) setParams(params ...any) error {
+func (c *convolution) setParams(params ...any) error {
 	if len(params) != 5 {
 		return fmt.Errorf("%s require 5 arguments", c.getName())
 	}
@@ -172,7 +172,7 @@ func (c convolution) setParams(params ...any) error {
 	}
 	c.kernel = s
 	var args []bool
-	for idx, arg := range params[1:3] {
+	for idx, arg := range params[1:4] {
 		v, ok := arg.(bool)
 		if !ok {
 			return fmt.Errorf("%s require a bool for argument %d", c.getName(), idx+1)
@@ -183,7 +183,7 @@ func (c convolution) setParams(params ...any) error {
 
 	v, ok := params[4].(float32)
 	if !ok {
-		return fmt.Errorf("%s require float 32 for argument 4", c.getName())
+		return fmt.Errorf("%s require float 32 for argument 5", c.getName())
 	}
 	c.delta = v
 	return nil
@@ -191,22 +191,23 @@ func (c convolution) setParams(params ...any) error {
 
 func setMaps() {
 
-	effects = map[string]effect{"sobel": noParams{name: "sobel", generator: gift.Sobel},
-		"invert":          noParams{name: "invert", generator: gift.Invert},
-		"grayscale":       noParams{name: "grayscale", generator: gift.Grayscale},
-		"transpose":       noParams{name: "transpose", generator: gift.Transpose},
-		"transverse":      noParams{name: "transverse", generator: gift.Transverse},
-		"flip-horizontal": noParams{name: "flip-horizontal", generator: gift.FlipHorizontal},
-		"flip-vertical":   noParams{name: "fip-vertical", generator: gift.FlipVertical},
-		"sepia":           oneFloat{name: "sepia", generator: gift.Sepia},
-		"brightness":      oneFloat{name: "brightness", generator: gift.Brightness},
-		"contrast":        oneFloat{name: "contrast", generator: gift.Contrast},
-		"gamma":           oneFloat{name: "gamma", generator: gift.Gamma},
-		"hue":             oneFloat{name: "hue", generator: gift.Hue},
-		"gaussian":        oneFloat{name: "gaussian-blur", generator: gift.GaussianBlur},
-		"gaussian-blur":   oneFloat{name: "gaussian-blur", generator: gift.GaussianBlur},
-		"color-balance":   rgbOp{name: "color-balance", generator: gift.ColorBalance},
-		"convolution":     convolution{generator: gift.Convolution},
+	effects = map[string]effect{
+		"sobel":           &noParams{name: "sobel", generator: gift.Sobel},
+		"invert":          &noParams{name: "invert", generator: gift.Invert},
+		"grayscale":       &noParams{name: "grayscale", generator: gift.Grayscale},
+		"transpose":       &noParams{name: "transpose", generator: gift.Transpose},
+		"transverse":      &noParams{name: "transverse", generator: gift.Transverse},
+		"flip-horizontal": &noParams{name: "flip-horizontal", generator: gift.FlipHorizontal},
+		"flip-vertical":   &noParams{name: "fip-vertical", generator: gift.FlipVertical},
+		"sepia":           &oneFloat{name: "sepia", generator: gift.Sepia},
+		"brightness":      &oneFloat{name: "brightness", generator: gift.Brightness},
+		"contrast":        &oneFloat{name: "contrast", generator: gift.Contrast},
+		"gamma":           &oneFloat{name: "gamma", generator: gift.Gamma},
+		"hue":             &oneFloat{name: "hue", generator: gift.Hue},
+		"gaussian":        &oneFloat{name: "gaussian-blur", generator: gift.GaussianBlur},
+		"gaussian-blur":   &oneFloat{name: "gaussian-blur", generator: gift.GaussianBlur},
+		"color-balance":   &rgbOp{name: "color-balance", generator: gift.ColorBalance},
+		"convolution":     &convolution{generator: gift.Convolution},
 	}
 
 }

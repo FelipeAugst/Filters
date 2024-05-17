@@ -10,11 +10,12 @@ import (
 )
 
 func main() {
+
 	var generators = []filter.Filter{
 
-		{Name: "gaussian", Params: []any{3.0}},
-		{Name: "color-balance", Params: []any{50.0, 20.5, 30.4}},
-		{Name: "transpose"},
+		{Name: "sepia", Params: []any{90.0}},
+		{Name: "convolution", Params: []any{[]float64{1.0, 3.0, 5.0, 3.4, 5.5, 5.5}, true, true, false, 2.0}},
+		{Name: "sepia", Params: []any{50.0}},
 	}
 
 	var filters []gift.Filter

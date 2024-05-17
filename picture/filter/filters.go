@@ -1,19 +1,19 @@
 package filter
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/disintegration/gift"
 )
 
 var (
-	noParamsOp map[string]any
-	oneFloatOp map[string]any
-	rgb        map[string]any
+	effects map[string]effect
 )
 
-type Effect interface {
+type effect interface {
 	generateFilter() gift.Filter
+	getName() string
+	setParams(params ...any) error
 }
 
 type noParams struct {
@@ -27,6 +27,15 @@ func (n noParams) generateFilter() gift.Filter {
 
 func (n noParams) getName() string {
 	return n.name
+}
+
+func (n noParams) setParams(params ...any) error {
+	if len(params) > 0 {
+		return fmt.Errorf("%s take no arguments", n.getName())
+
+	}
+	return nil
+
 }
 
 type oneFloat struct {
@@ -43,6 +52,21 @@ func (o oneFloat) getName() string {
 	return o.name
 }
 
+func (o oneFloat) setParams(params ...any) error {
+	if len(params) != 1 {
+		return fmt.Errorf("%s require one argument", o.getName())
+
+	}
+
+	param, ok := params[0].(float32)
+	if !ok {
+		return fmt.Errorf("argument for %s must be a float 32", o.getName())
+	}
+	o.param = param
+	return nil
+
+}
+
 type rgbOp struct {
 	name      string
 	r, g, b   float32
@@ -57,44 +81,58 @@ func (r rgbOp) getName() string {
 	return r.name
 }
 
-func setMaps() {
+func (r rgbOp) setParams(params ...any) error {
+	if len(params) != 3 {
+		return fmt.Errorf("%s require three arguments", r.getName())
 
-	noParamsOp = map[string]any{"sobel": gift.Sobel, "invert": gift.Invert, "grayscale": gift.Grayscale, "transpose": gift.Transpose, "transverse": gift.Transverse, "flip-horizontal": gift.FlipHorizontal, "flip-vertical": gift.FlipVertical}
+	}
+	var rgb = make([]float32, 3)
+	for _, p := range params {
+		arg, ok := p.(float32)
+		if !ok {
+			return fmt.Errorf("argument for %s must be a float 32", r.getName())
+		} else {
+			rgb = append(rgb, arg)
+		}
 
-	oneFloatOp = map[string]any{"sepia": gift.Sepia, "brightness": gift.Brightness, "contrast": gift.Contrast, "gamma": gift.Gamma, "hue": gift.Hue,
-		"gaussian": gift.GaussianBlur}
-
+	}
+	r.r, r.g, r.b = rgb[0], rgb[1], rgb[2]
+	return nil
 
 }
 
-func NewEffect(name string, params ...float32) (gift.Filter, error) {
-	switch len(params) {
-	case 0:
-		var n noParams
-		n.name = name
-		n.generator = noParamsOp[name].(func() gift.Filter)
-		return n.generateFilter(), nil
+func setMaps() {
 
-	case 1:
-		var o oneFloat
-		o.name = name
-		o.param = params[0]
-		o.generator = oneFloatOp[name].(func(float32) gift.Filter)
-		return o.generateFilter(), nil
-
-	case 3:
-		var r rgbOp
-		r.name = name
-		r.r = params[0]
-		r.g = params[1]
-		r.b = params[2]
-		r.generator = rgb[name].(func(float32, float32, float32) gift.Filter)
-		return r.generateFilter(), nil
-
-	default:
-		return nil, errors.New("invalid arguments size")
-
+	effects = map[string]effect{"sobel": noParams{name: "sobel", generator: gift.Sobel},
+		"invert":          noParams{name: "invert", generator: gift.Invert},
+		"grayscale":       noParams{name: "grayscale", generator: gift.Grayscale},
+		"transpose":       noParams{name: "transpose", generator: gift.Transpose},
+		"transverse":      noParams{name: "transverse", generator: gift.Transverse},
+		"flip-horizontal": noParams{name: "flip-horizontal", generator: gift.FlipHorizontal},
+		"flip-vertical":   noParams{name: "fip-vertical", generator: gift.FlipVertical},
+		"sepia":           oneFloat{name: "sepia", generator: gift.Sepia},
+		"brightness":      oneFloat{name: "brightness", generator: gift.Brightness},
+		"contrast":        oneFloat{name: "contrast", generator: gift.Contrast},
+		"gamma":           oneFloat{name: "gamma", generator: gift.Gamma},
+		"hue":             oneFloat{name: "hue", generator: gift.Hue},
+		"gaussian":        oneFloat{name: "gaussian-blur", generator: gift.GaussianBlur},
+		"gaussian-blur":   oneFloat{name: "gaussian-blur", generator: gift.GaussianBlur},
+		"color-balance":   rgbOp{name: "color-balance", generator: gift.ColorBalance},
 	}
+
+}
+
+func NewFilter(name string, params ...float32) (gift.Filter, error) {
+	e, ok := effects[name]
+	if !ok {
+		return nil, fmt.Errorf("invalid filter name %s", name)
+	}
+
+	if err := e.setParams(); err != nil {
+		return nil, err
+	}
+
+	return e.generateFilter(), nil
 
 }
 

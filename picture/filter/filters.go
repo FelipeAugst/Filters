@@ -64,7 +64,6 @@ func setMaps() {
 	oneFloatOp = map[string]any{"sepia": gift.Sepia, "brightness": gift.Brightness, "contrast": gift.Contrast, "gamma": gift.Gamma, "hue": gift.Hue,
 		"gaussian": gift.GaussianBlur}
 
-	rgb = map[string]any{"color-balance": gift.ColorBalance}
 
 }
 

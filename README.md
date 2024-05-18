@@ -1,1 +1,1 @@
-Um wraper simples para https://github.com/disintegration/gift
+Um wrapper simples para https://github.com/disintegration/gift

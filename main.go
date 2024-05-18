@@ -3,6 +3,7 @@ package main
 import (
 	"filters/picture"
 	"filters/picture/filter"
+	"fmt"
 	"log"
 
 	"sync"
@@ -45,7 +46,9 @@ func main() {
 		}
 		go func() {
 			pic.Apply()
-			pic.Save(paths[idx])
+			if err := pic.Save(paths[idx]); err != nil {
+				fmt.Println("Failed to save picture: ", err.Error())
+			}
 			defer wg.Done()
 		}()
 	}

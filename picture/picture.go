@@ -51,6 +51,7 @@ func loadImage(path string) (image.Image, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
+	defer file.Close()
 	img, format, err := image.Decode(file)
 	if err != nil {
 		return nil, "", err
@@ -74,6 +75,7 @@ func (p *Picture) Save(path string) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 	if err = png.Encode(file, p.filtered); err != nil {
 		return err
 	}

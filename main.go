@@ -3,18 +3,19 @@ package main
 import (
 	"filters/picture"
 	"filters/picture/filter"
-	"fmt"
 	"log"
+
+	"sync"
 
 	"github.com/disintegration/gift"
 )
 
 func main() {
-
+	var wg sync.WaitGroup
 	var generators = []filter.Filter{
 
 		{Name: "sepia", Params: []any{90.0}},
-		{Name: "convolution", Params: []any{[]float64{1.0, 3.0, 5.0, 3.4, 5.5, 5.5}, true, true, false, 2.0}},
+		{Name: "hue", Params: []any{500.6}},
 		{Name: "sepia", Params: []any{50.0}},
 	}
 
@@ -36,10 +37,17 @@ func main() {
 	pics := []*picture.Picture{car, fish, sunflower}
 
 	paths := []string{"testdata/results/teste1.png", "testdata/results/teste2.png", "testdata/results/teste3.png"}
-
+	wg.Add(len(pics))
 	for idx, pic := range pics {
-		pic.Apply()
-		pic.Save(paths[idx])
+		if pic == nil {
+			log.Fatal("nil Picture object!")
+			continue
+		}
+		go func() {
+			pic.Apply()
+			pic.Save(paths[idx])
+			defer wg.Done()
+		}()
 	}
-
+	wg.Wait()
 }
